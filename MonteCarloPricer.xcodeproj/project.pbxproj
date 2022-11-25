@@ -8,6 +8,11 @@
 
 /* Begin PBXBuildFile section */
 		CA44EEC8292F1C8900597BFF /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CA44EEC7292F1C8900597BFF /* main.cpp */; };
+		CA44EED0292F216100597BFF /* RNG.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CA44EECE292F216100597BFF /* RNG.cpp */; };
+		CA44EED3292F34A200597BFF /* EuropeanOption.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CA44EED1292F34A200597BFF /* EuropeanOption.cpp */; };
+		CA44EEDC292F37BA00597BFF /* MonteCarlo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CA44EEDA292F37BA00597BFF /* MonteCarlo.cpp */; };
+		CA44EEDF292FEBBA00597BFF /* PathGenerator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CA44EEDD292FEBBA00597BFF /* PathGenerator.cpp */; };
+		CA44EEE5292FF45C00597BFF /* EuropeanOptionAnalyzer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CA44EEE3292FF45C00597BFF /* EuropeanOptionAnalyzer.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -25,6 +30,16 @@
 /* Begin PBXFileReference section */
 		CA44EEC4292F1C8900597BFF /* MonteCarloPricer */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = MonteCarloPricer; sourceTree = BUILT_PRODUCTS_DIR; };
 		CA44EEC7292F1C8900597BFF /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		CA44EECE292F216100597BFF /* RNG.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = RNG.cpp; sourceTree = "<group>"; };
+		CA44EECF292F216100597BFF /* RNG.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = RNG.hpp; sourceTree = "<group>"; };
+		CA44EED1292F34A200597BFF /* EuropeanOption.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = EuropeanOption.cpp; sourceTree = "<group>"; };
+		CA44EED2292F34A200597BFF /* EuropeanOption.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = EuropeanOption.hpp; sourceTree = "<group>"; };
+		CA44EEDA292F37BA00597BFF /* MonteCarlo.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = MonteCarlo.cpp; sourceTree = "<group>"; };
+		CA44EEDB292F37BA00597BFF /* MonteCarlo.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = MonteCarlo.hpp; sourceTree = "<group>"; };
+		CA44EEDD292FEBBA00597BFF /* PathGenerator.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = PathGenerator.cpp; sourceTree = "<group>"; };
+		CA44EEDE292FEBBA00597BFF /* PathGenerator.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = PathGenerator.hpp; sourceTree = "<group>"; };
+		CA44EEE3292FF45C00597BFF /* EuropeanOptionAnalyzer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = EuropeanOptionAnalyzer.cpp; sourceTree = "<group>"; };
+		CA44EEE4292FF45C00597BFF /* EuropeanOptionAnalyzer.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = EuropeanOptionAnalyzer.hpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -58,6 +73,16 @@
 			isa = PBXGroup;
 			children = (
 				CA44EEC7292F1C8900597BFF /* main.cpp */,
+				CA44EECE292F216100597BFF /* RNG.cpp */,
+				CA44EECF292F216100597BFF /* RNG.hpp */,
+				CA44EED1292F34A200597BFF /* EuropeanOption.cpp */,
+				CA44EED2292F34A200597BFF /* EuropeanOption.hpp */,
+				CA44EEDA292F37BA00597BFF /* MonteCarlo.cpp */,
+				CA44EEDB292F37BA00597BFF /* MonteCarlo.hpp */,
+				CA44EEDD292FEBBA00597BFF /* PathGenerator.cpp */,
+				CA44EEDE292FEBBA00597BFF /* PathGenerator.hpp */,
+				CA44EEE3292FF45C00597BFF /* EuropeanOptionAnalyzer.cpp */,
+				CA44EEE4292FF45C00597BFF /* EuropeanOptionAnalyzer.hpp */,
 			);
 			path = MonteCarloPricer;
 			sourceTree = "<group>";
@@ -120,6 +145,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				CA44EEC8292F1C8900597BFF /* main.cpp in Sources */,
+				CA44EED3292F34A200597BFF /* EuropeanOption.cpp in Sources */,
+				CA44EED0292F216100597BFF /* RNG.cpp in Sources */,
+				CA44EEDF292FEBBA00597BFF /* PathGenerator.cpp in Sources */,
+				CA44EEE5292FF45C00597BFF /* EuropeanOptionAnalyzer.cpp in Sources */,
+				CA44EEDC292F37BA00597BFF /* MonteCarlo.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
