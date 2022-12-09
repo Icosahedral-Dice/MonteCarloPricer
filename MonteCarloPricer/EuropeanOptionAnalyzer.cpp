@@ -25,7 +25,7 @@ EuropeanOptionResults EuropeanOptionAnalyzer::Analyze(std::size_t N, unsigned lo
     // Reseed RNG machine
     LCE_uniform::reseed(seed);
     
-    std::vector<double> Z(StandardGaussianVector(N).data);
+    std::vector<double> Z(StandardGaussianMatrix::gen(N));
     std::vector<double> S(OneAssetNoPath_BS(option_.S_, option_.T_, option_.sigma_, option_.r_, option_.q_, Z).S);
     
     std::vector<double> call;
@@ -99,7 +99,7 @@ double EuropeanOptionAnalyzer::Price(std::size_t N, const OptionType& type, cons
 
 double EuropeanOptionAnalyzer::PriceVanilla(std::size_t N, const std::function<double (double)>& payoff) const {
     // Generate vector of standard Gaussian
-    std::vector<double> Z(StandardGaussianVector(N).data);
+    std::vector<double> Z(StandardGaussianMatrix::gen(N));
     
     // From standard Gaussian get asset endpoint prices
     std::vector<double> S(OneAssetNoPath_BS(option_.S_, option_.T_, option_.sigma_, option_.r_, option_.q_, Z).S);
@@ -111,10 +111,92 @@ double EuropeanOptionAnalyzer::PriceVanilla(std::size_t N, const std::function<d
     return this->DiscountAndAverage(V);
 }
 
+std::vector<double> EuropeanOptionAnalyzer::PriceVanilla(std::size_t N, const std::function<double (double)>& payoff, const Dividend& proportional, const Dividend& fixed) const {
+    
+    std::vector<double> res;
+    
+    // !!!: HARDWIRED. FIX!!
+    
+    // Generate vector of standard Gaussian
+    std::vector<std::vector<double>> Z(StandardGaussianMatrix::gen(N, 4));
+    
+    // From standard Gaussian get asset endpoint prices
+    std::vector<std::vector<double>> S_path(OneAssetWithPath_BS(option_.S_, option_.T_, option_.sigma_, option_.r_, option_.q_, Z, proportional, fixed).S);
+    
+    std::vector<double> S(S_path.size());
+    std::transform(S_path.cbegin(), S_path.cend(), S.begin(), [](const std::vector<double>& vec){ return vec.back(); });
+    
+    // Get payoff
+    std::vector<double> V(S.size());
+    std::transform(S.cbegin(), S.cend(), V.begin(), payoff);
+    
+    double value = this->DiscountAndAverage(V);
+    
+    res.push_back(value);
+    
+    // Get no-dividend S
+    std::vector<double> S_nodiv(S.size());
+    
+    double t0 = 1./6., t1 = 1./6., t2 = 1./6., t3 = 1./12.;
+    auto ZtoSNoDiv = [&](const std::vector<double>& z_path)->double {
+        assert(z_path.size() == 4);
+        return option_.S_ * std::exp((option_.r_ - option_.sigma_ * option_.sigma_ * .5) * option_.T_ + option_.sigma_ * (std::sqrt(t0) * z_path[0] + std::sqrt(t1) * z_path[1] + std::sqrt(t2) * z_path[2] + std::sqrt(t3) * z_path[3]));
+    };
+    
+    std::transform(Z.cbegin(), Z.cend(), S_nodiv.begin(), ZtoSNoDiv);
+    
+    auto FindDelta = [&](double s, double real_s)->double {
+        if (real_s < option_.K_) {
+            return - s / option_.S_;
+        } else {
+            return 0.;
+        }
+    };
+    
+    std::vector<double> delta(S.size());
+    std::transform(S_nodiv.cbegin(), S_nodiv.cend(), S.cbegin(), delta.begin(), FindDelta);
+    double delta_hat = this->DiscountAndAverage(delta) * (1. - 0.02);
+    res.push_back(delta_hat);
+    
+    // Control variates
+    
+    std::vector<double> V_nodiv(S.size());
+    std::transform(S_nodiv.cbegin(), S_nodiv.cend(), V_nodiv.begin(), payoff);
+    
+    double sum_V = std::accumulate(V.cbegin(), V.cend(), 0.);
+    double sum_V_nodiv = std::accumulate(V_nodiv.cbegin(), V_nodiv.cend(), 0.);
+    double sum_V_V_nodiv = std::inner_product(V.cbegin(), V.cend(), V_nodiv.cbegin(), 0.);
+    double sum_V_nodiv_squared = std::inner_product(V_nodiv.cbegin(), V_nodiv.cend(), V_nodiv.cbegin(), 0.);
+    
+    double b_hat = (sum_V_V_nodiv - sum_V * sum_V_nodiv / static_cast<double>(S.size())) / (sum_V_nodiv_squared - sum_V_nodiv * sum_V_nodiv / static_cast<double>(S.size()));
+    
+//    std::cout << "b: " << b_hat << std::endl;
+//    std::cout << sum_V << '\t' << sum_V_nodiv << '\t' << sum_V_V_nodiv << '\t' << sum_V_nodiv_squared << std::endl;
+    double W_hat = value - b_hat * (this->DiscountAndAverage(V_nodiv) - option_.Put());
+    
+    res.push_back(W_hat);
+    
+    std::vector<double> delta_nodiv(delta.size());
+    std::transform(S_nodiv.cbegin(), S_nodiv.cend(), S_nodiv.cbegin(), delta_nodiv.begin(), FindDelta);
+    
+    double sum_delta = std::accumulate(delta.cbegin(), delta.cend(), 0.);
+    double sum_delta_nodiv = std::accumulate(delta_nodiv.cbegin(), delta_nodiv.cend(), 0.);
+    double sum_delta_delta_nodiv = std::inner_product(delta.cbegin(), delta.cend(), delta_nodiv.cbegin(), 0.);
+    double sum_delta_nodiv_squared = std::inner_product(delta_nodiv.cbegin(), delta_nodiv.cend(), delta_nodiv.cbegin(), 0.);
+    
+    double b_delta_hat = (sum_delta_delta_nodiv - sum_delta * sum_delta_nodiv / static_cast<double>(S.size())) / (sum_delta_nodiv_squared - sum_delta_nodiv * sum_delta_nodiv / static_cast<double>(S.size()));
+    
+    double W_delta_hat = delta_hat - b_delta_hat * (this->DiscountAndAverage(delta_nodiv) - option_.DeltaPut());
+    
+    res.push_back(W_delta_hat);
+    
+    return res;
+}
+
 // Control variate
 double EuropeanOptionAnalyzer::PriceCV(std::size_t N, const std::function<double (double)>& payoff) const {
     // Generate vector of standard Gaussian
-    std::vector<double> Z(StandardGaussianVector(N).data);
+    std::vector<double> Z(StandardGaussianMatrix::gen(N));
     
     // From standard Gaussian get asset endpoint prices
     std::vector<double> S(OneAssetNoPath_BS(option_.S_, option_.T_, option_.sigma_, option_.r_, option_.q_, Z).S);
@@ -133,11 +215,7 @@ double EuropeanOptionAnalyzer::PriceCV(std::size_t N, const std::function<double
     double sum_S = std::accumulate(S.cbegin(), S.cend(), 0.);
     double sum_V = std::accumulate(V.cbegin(), V.cend(), 0.);
     
-    double b_hat = (sum_SV - sum_S * sum_V) / (sum_SS - sum_S * sum_S);
-    
-    auto VStoW = [=](double v, double s)->double {
-        return v - b_hat * (s - std::exp(-option_.r_ * option_.T_) * option_.S_);
-    };
+    double b_hat = (sum_SV - sum_S * sum_V / static_cast<double>(S.size())) / (sum_SS - sum_S * sum_S / static_cast<double>(S.size()));
     
     double W_hat = sum_V / V.size() - b_hat * (sum_S / S.size() - std::exp(option_.r_ * option_.T_) * option_.S_);
     
@@ -147,7 +225,7 @@ double EuropeanOptionAnalyzer::PriceCV(std::size_t N, const std::function<double
 // Antithetic variables
 double EuropeanOptionAnalyzer::PriceAV(std::size_t N, const std::function<double (double)>& payoff) const {
     // Generate vector of standard Gaussian
-    std::vector<double> Z(StandardGaussianVector(N).data);
+    std::vector<double> Z(StandardGaussianMatrix::gen(N));
     
     // From standard Gaussian get asset endpoint prices
     std::vector<double> S(OneAssetNoPath_BS(option_.S_, option_.T_, option_.sigma_, option_.r_, option_.q_, Z).S);
@@ -168,7 +246,7 @@ double EuropeanOptionAnalyzer::PriceAV(std::size_t N, const std::function<double
 double EuropeanOptionAnalyzer::PriceMM(std::size_t N, const std::function<double (double)>& payoff) const {
     
     // Generate vector of standard Gaussian
-    std::vector<double> Z(StandardGaussianVector(N).data);
+    std::vector<double> Z(StandardGaussianMatrix::gen(N));
     
     // From standard Gaussian get asset endpoint prices
     std::vector<double> S(OneAssetNoPath_BS(option_.S_, option_.T_, option_.sigma_, option_.r_, option_.q_, Z).S);
@@ -187,7 +265,7 @@ double EuropeanOptionAnalyzer::PriceMM(std::size_t N, const std::function<double
 // Moment matching and control variables
 double EuropeanOptionAnalyzer::PriceMMCV(std::size_t N, const std::function<double (double)>& payoff) const {
     // Generate vector of standard Gaussian
-    std::vector<double> Z(StandardGaussianVector(N).data);
+    std::vector<double> Z(StandardGaussianMatrix::gen(N));
     
     // From standard Gaussian get asset endpoint prices
     std::vector<double> S(OneAssetNoPath_BS(option_.S_, option_.T_, option_.sigma_, option_.r_, option_.q_, Z).S);
@@ -210,11 +288,7 @@ double EuropeanOptionAnalyzer::PriceMMCV(std::size_t N, const std::function<doub
     double sum_S = std::accumulate(S.cbegin(), S.cend(), 0.);
     double sum_V = std::accumulate(V.cbegin(), V.cend(), 0.);
     
-    double b_hat = (sum_SV - sum_S * sum_V) / (sum_SS - sum_S * sum_S);
-    
-    auto VStoW = [=](double v, double s)->double {
-        return v - b_hat * (s - std::exp(-option_.r_ * option_.T_) * option_.S_);
-    };
+    double b_hat = (sum_SV - sum_S * sum_V / static_cast<double>(S.size())) / (sum_SS - sum_S * sum_S / static_cast<double>(S.size()));
     
     double W_hat = sum_V / V.size() - b_hat * (sum_S / S.size() - std::exp(option_.r_ * option_.T_) * option_.S_);
     

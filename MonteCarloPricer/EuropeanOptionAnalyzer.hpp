@@ -10,6 +10,7 @@
 
 #include "EuropeanOption.hpp"
 #include <iostream>
+#include "PathGenerator.hpp"
 
 struct EuropeanOptionResults {
     double Call;
@@ -60,6 +61,12 @@ private:
     double PriceMM(std::size_t N, const std::function<double (double)>& payoff) const;
     // Moment matching and control variables
     double PriceMMCV(std::size_t N, const std::function<double (double)>& payoff) const;
+    
+public:
+    // Dividend-paying option
+    std::vector<double> PriceVanilla(std::size_t N, const std::function<double (double)>& payoff, const Dividend& proportional, const Dividend& fixed) const;
+    // Control variate
+    std::vector<double> PriceCV(std::size_t N, const std::function<double (double)>& payoff, const Dividend& proportional, const Dividend& fixed) const;
     
     
 };

@@ -130,16 +130,41 @@ void Rng::reseed(unsigned new_seed) {
     Rng::eng_.seed(new_seed);
 }
 
-StandardGaussianVector::StandardGaussianVector(std::size_t size) : data(size) {
+//StandardGaussianVector::StandardGaussianVector(std::size_t size) : data(size) {
+//    assert(size % 2 == 0);
+//
+//    // Generate samples using Box Muller
+//    auto zgen_it = data.begin();
+//
+//    while (zgen_it != data.end()) {
+//        double z1, z2;
+//        std::tie(z1, z2) = MarsagliaBray::standard_normal_pair();
+//        *(zgen_it++) = z1;
+//        *(zgen_it++) = z2;
+//    }
+//}
+
+std::vector<double> StandardGaussianMatrix::gen(std::size_t size) {
     assert(size % 2 == 0);
-    
+    std::vector<double> z(size);
+
     // Generate samples using Box Muller
-    auto zgen_it = data.begin();
-    
-    while (zgen_it != data.end()) {
+    auto zgen_it = z.begin();
+
+    while (zgen_it != z.end()) {
         double z1, z2;
         std::tie(z1, z2) = MarsagliaBray::standard_normal_pair();
         *(zgen_it++) = z1;
         *(zgen_it++) = z2;
     }
+    
+    return z;
+}
+
+std::vector<std::vector<double>> StandardGaussianMatrix::gen(std::size_t rows, std::size_t cols) {
+    std::vector<std::vector<double>> z;
+    for (std::size_t i = 0; i < rows; i++) {
+        z.push_back(StandardGaussianMatrix::gen(cols));
+    }
+    return z;
 }

@@ -104,12 +104,13 @@ public:
     static void reseed(unsigned new_seed);
 };
 
-class StandardGaussianVector {
+class StandardGaussianMatrix {
 public:
-    std::vector<double> data;
+    StandardGaussianMatrix() = delete;
+    ~StandardGaussianMatrix() = default;
     
-    StandardGaussianVector(std::size_t size);
-    ~StandardGaussianVector() = default;
+    static std::vector<double> gen(std::size_t size);
+    static std::vector<std::vector<double>> gen(std::size_t rows, std::size_t cols);
 };
 
 #endif /* RNG_hpp */
