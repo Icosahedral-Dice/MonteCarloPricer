@@ -13,6 +13,7 @@
 		CA44EEDF292FEBBA00597BFF /* PathGenerator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CA44EEDD292FEBBA00597BFF /* PathGenerator.cpp */; };
 		CA44EEE5292FF45C00597BFF /* EuropeanOptionAnalyzer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CA44EEE3292FF45C00597BFF /* EuropeanOptionAnalyzer.cpp */; };
 		CA44EEEB2933F57000597BFF /* PathDependentOption.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CA44EEE92933F57000597BFF /* PathDependentOption.cpp */; };
+		CA74CB1B2943F3C400331608 /* BarrierOptionAnalyzer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CA74CB192943F3C400331608 /* BarrierOptionAnalyzer.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -40,6 +41,8 @@
 		CA44EEE4292FF45C00597BFF /* EuropeanOptionAnalyzer.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = EuropeanOptionAnalyzer.hpp; sourceTree = "<group>"; };
 		CA44EEE92933F57000597BFF /* PathDependentOption.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = PathDependentOption.cpp; sourceTree = "<group>"; };
 		CA44EEEA2933F57000597BFF /* PathDependentOption.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = PathDependentOption.hpp; sourceTree = "<group>"; };
+		CA74CB192943F3C400331608 /* BarrierOptionAnalyzer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = BarrierOptionAnalyzer.cpp; sourceTree = "<group>"; };
+		CA74CB1A2943F3C400331608 /* BarrierOptionAnalyzer.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = BarrierOptionAnalyzer.hpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -83,6 +86,8 @@
 				CA44EEE4292FF45C00597BFF /* EuropeanOptionAnalyzer.hpp */,
 				CA44EEE92933F57000597BFF /* PathDependentOption.cpp */,
 				CA44EEEA2933F57000597BFF /* PathDependentOption.hpp */,
+				CA74CB192943F3C400331608 /* BarrierOptionAnalyzer.cpp */,
+				CA74CB1A2943F3C400331608 /* BarrierOptionAnalyzer.hpp */,
 			);
 			path = MonteCarloPricer;
 			sourceTree = "<group>";
@@ -147,6 +152,7 @@
 				CA44EEC8292F1C8900597BFF /* main.cpp in Sources */,
 				CA44EED3292F34A200597BFF /* EuropeanOption.cpp in Sources */,
 				CA44EEEB2933F57000597BFF /* PathDependentOption.cpp in Sources */,
+				CA74CB1B2943F3C400331608 /* BarrierOptionAnalyzer.cpp in Sources */,
 				CA44EED0292F216100597BFF /* RNG.cpp in Sources */,
 				CA44EEDF292FEBBA00597BFF /* PathGenerator.cpp in Sources */,
 				CA44EEE5292FF45C00597BFF /* EuropeanOptionAnalyzer.cpp in Sources */,

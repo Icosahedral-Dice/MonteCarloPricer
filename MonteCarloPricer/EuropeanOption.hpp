@@ -10,6 +10,11 @@
 
 #include <functional>
 
+enum EuropeanOptionType {
+    Call,
+    Put,
+};
+
 class EuropeanOption {
 public:
     double t_;      // Current time

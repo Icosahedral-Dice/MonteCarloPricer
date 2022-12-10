@@ -111,14 +111,15 @@ double EuropeanOptionAnalyzer::PriceVanilla(std::size_t N, const std::function<d
     return this->DiscountAndAverage(V);
 }
 
-std::vector<double> EuropeanOptionAnalyzer::PriceVanilla(std::size_t N, const std::function<double (double)>& payoff, const Dividend& proportional, const Dividend& fixed) const {
+std::vector<double> EuropeanOptionAnalyzer::Price(std::size_t N, const std::function<double (double)>& payoff, const Dividend& proportional, const Dividend& fixed, unsigned seed) const {
+    
+    // Reseed generator
+    LCE_uniform::reseed(seed);
     
     std::vector<double> res;
     
-    // !!!: HARDWIRED. FIX!!
-    
     // Generate vector of standard Gaussian
-    std::vector<std::vector<double>> Z(StandardGaussianMatrix::gen(N, 4));
+    std::vector<std::vector<double>> Z(StandardGaussianMatrix::gen(N, proportional.dates.size() + fixed.dates.size() + 1));
     
     // From standard Gaussian get asset endpoint prices
     std::vector<std::vector<double>> S_path(OneAssetWithPath_BS(option_.S_, option_.T_, option_.sigma_, option_.r_, option_.q_, Z, proportional, fixed).S);
@@ -137,10 +138,12 @@ std::vector<double> EuropeanOptionAnalyzer::PriceVanilla(std::size_t N, const st
     // Get no-dividend S
     std::vector<double> S_nodiv(S.size());
     
-    double t0 = 1./6., t1 = 1./6., t2 = 1./6., t3 = 1./12.;
+    auto sqrt_of_time_diff(this->FindSqrtOfTimeDiff(proportional, fixed));
+    
+//    double t0 = 1. / 6., t1 = 1. / 6., t2 = 1. / 6., t3 = 1. / 12.;
     auto ZtoSNoDiv = [&](const std::vector<double>& z_path)->double {
-        assert(z_path.size() == 4);
-        return option_.S_ * std::exp((option_.r_ - option_.sigma_ * option_.sigma_ * .5) * option_.T_ + option_.sigma_ * (std::sqrt(t0) * z_path[0] + std::sqrt(t1) * z_path[1] + std::sqrt(t2) * z_path[2] + std::sqrt(t3) * z_path[3]));
+        assert(z_path.size() == sqrt_of_time_diff.size());
+        return option_.S_ * std::exp((option_.r_ - option_.sigma_ * option_.sigma_ * .5) * option_.T_ + option_.sigma_ * (std::inner_product(z_path.cbegin(), z_path.cend(), sqrt_of_time_diff.cbegin(), 0.)));
     };
     
     std::transform(Z.cbegin(), Z.cend(), S_nodiv.begin(), ZtoSNoDiv);
@@ -155,7 +158,10 @@ std::vector<double> EuropeanOptionAnalyzer::PriceVanilla(std::size_t N, const st
     
     std::vector<double> delta(S.size());
     std::transform(S_nodiv.cbegin(), S_nodiv.cend(), S.cbegin(), delta.begin(), FindDelta);
-    double delta_hat = this->DiscountAndAverage(delta) * (1. - 0.02);
+    double delta_hat = this->DiscountAndAverage(delta);
+    for (double div : proportional.dividends) {
+        delta_hat *= (1. - div);
+    }
     res.push_back(delta_hat);
     
     // Control variates
@@ -163,15 +169,8 @@ std::vector<double> EuropeanOptionAnalyzer::PriceVanilla(std::size_t N, const st
     std::vector<double> V_nodiv(S.size());
     std::transform(S_nodiv.cbegin(), S_nodiv.cend(), V_nodiv.begin(), payoff);
     
-    double sum_V = std::accumulate(V.cbegin(), V.cend(), 0.);
-    double sum_V_nodiv = std::accumulate(V_nodiv.cbegin(), V_nodiv.cend(), 0.);
-    double sum_V_V_nodiv = std::inner_product(V.cbegin(), V.cend(), V_nodiv.cbegin(), 0.);
-    double sum_V_nodiv_squared = std::inner_product(V_nodiv.cbegin(), V_nodiv.cend(), V_nodiv.cbegin(), 0.);
+    double b_hat = this->ControlVariateCoefficient(V, V_nodiv);
     
-    double b_hat = (sum_V_V_nodiv - sum_V * sum_V_nodiv / static_cast<double>(S.size())) / (sum_V_nodiv_squared - sum_V_nodiv * sum_V_nodiv / static_cast<double>(S.size()));
-    
-//    std::cout << "b: " << b_hat << std::endl;
-//    std::cout << sum_V << '\t' << sum_V_nodiv << '\t' << sum_V_V_nodiv << '\t' << sum_V_nodiv_squared << std::endl;
     double W_hat = value - b_hat * (this->DiscountAndAverage(V_nodiv) - option_.Put());
     
     res.push_back(W_hat);
@@ -179,12 +178,7 @@ std::vector<double> EuropeanOptionAnalyzer::PriceVanilla(std::size_t N, const st
     std::vector<double> delta_nodiv(delta.size());
     std::transform(S_nodiv.cbegin(), S_nodiv.cend(), S_nodiv.cbegin(), delta_nodiv.begin(), FindDelta);
     
-    double sum_delta = std::accumulate(delta.cbegin(), delta.cend(), 0.);
-    double sum_delta_nodiv = std::accumulate(delta_nodiv.cbegin(), delta_nodiv.cend(), 0.);
-    double sum_delta_delta_nodiv = std::inner_product(delta.cbegin(), delta.cend(), delta_nodiv.cbegin(), 0.);
-    double sum_delta_nodiv_squared = std::inner_product(delta_nodiv.cbegin(), delta_nodiv.cend(), delta_nodiv.cbegin(), 0.);
-    
-    double b_delta_hat = (sum_delta_delta_nodiv - sum_delta * sum_delta_nodiv / static_cast<double>(S.size())) / (sum_delta_nodiv_squared - sum_delta_nodiv * sum_delta_nodiv / static_cast<double>(S.size()));
+    double b_delta_hat = this->ControlVariateCoefficient(delta, delta_nodiv);
     
     double W_delta_hat = delta_hat - b_delta_hat * (this->DiscountAndAverage(delta_nodiv) - option_.DeltaPut());
     
@@ -216,6 +210,8 @@ double EuropeanOptionAnalyzer::PriceCV(std::size_t N, const std::function<double
     double sum_V = std::accumulate(V.cbegin(), V.cend(), 0.);
     
     double b_hat = (sum_SV - sum_S * sum_V / static_cast<double>(S.size())) / (sum_SS - sum_S * sum_S / static_cast<double>(S.size()));
+    
+//    double b_hat = this->ControlVariateCoefficient(V, S);
     
     double W_hat = sum_V / V.size() - b_hat * (sum_S / S.size() - std::exp(option_.r_ * option_.T_) * option_.S_);
     
@@ -294,3 +290,29 @@ double EuropeanOptionAnalyzer::PriceMMCV(std::size_t N, const std::function<doub
     
     return W_hat;
 }
+
+double EuropeanOptionAnalyzer::ControlVariateCoefficient(const std::vector<double>& dependent_variable, const std::vector<double>& independent_variable) const {
+    
+    assert(dependent_variable.size() == independent_variable.size());
+    
+    double sum_dep_indep = std::inner_product(independent_variable.cbegin(), independent_variable.cend(), dependent_variable.cbegin(), 0.);
+    double sum_indep_indep = std::inner_product(independent_variable.cbegin(), independent_variable.cend(), independent_variable.cbegin(), 0.);;
+    double sum_dep = std::accumulate(dependent_variable.cbegin(), dependent_variable.cend(), 0.);
+    double sum_indep = std::accumulate(independent_variable.cbegin(), independent_variable.cend(), 0.);
+    
+    return (sum_dep_indep - sum_dep * sum_indep / static_cast<double>(independent_variable.size())) / (sum_indep_indep - sum_indep * sum_indep / static_cast<double>(independent_variable.size()));
+}
+
+std::vector<double> EuropeanOptionAnalyzer::FindSqrtOfTimeDiff(const Dividend& proportional, const Dividend& fixed) const {
+    
+    std::vector<double> time_diff(proportional.dates.size() + fixed.dates.size());
+    std::merge(proportional.dates.cbegin(), proportional.dates.cend(), fixed.dates.cbegin(), fixed.dates.cend(), time_diff.begin());
+    time_diff.push_back(option_.T_);
+    
+    std::adjacent_difference(time_diff.cbegin(), time_diff.cend(), time_diff.begin());
+    
+    std::transform(time_diff.cbegin(), time_diff.cend(), time_diff.begin(), [](double t)->double { return std::sqrt(t); });
+        
+    return time_diff;
+}
+

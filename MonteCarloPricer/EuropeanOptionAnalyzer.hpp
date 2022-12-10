@@ -62,11 +62,15 @@ private:
     // Moment matching and control variables
     double PriceMMCV(std::size_t N, const std::function<double (double)>& payoff) const;
     
+    double ControlVariateCoefficient(const std::vector<double>& dependent_variable, const std::vector<double>& independent_variable) const;
+    
+    std::vector<double> FindSqrtOfTimeDiff(const Dividend& proportional, const Dividend& fixed) const;
+    
 public:
-    // Dividend-paying option
-    std::vector<double> PriceVanilla(std::size_t N, const std::function<double (double)>& payoff, const Dividend& proportional, const Dividend& fixed) const;
-    // Control variate
-    std::vector<double> PriceCV(std::size_t N, const std::function<double (double)>& payoff, const Dividend& proportional, const Dividend& fixed) const;
+    // Discrete-dividend-paying option
+    // return: value, delta, value with control variates, delta with control variates
+    std::vector<double> Price(std::size_t N, const std::function<double (double)>& payoff, const Dividend& proportional, const Dividend& fixed, unsigned seed = 1) const;
+    
     
     
 };

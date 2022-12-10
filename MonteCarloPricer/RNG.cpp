@@ -163,8 +163,17 @@ std::vector<double> StandardGaussianMatrix::gen(std::size_t size) {
 
 std::vector<std::vector<double>> StandardGaussianMatrix::gen(std::size_t rows, std::size_t cols) {
     std::vector<std::vector<double>> z;
-    for (std::size_t i = 0; i < rows; i++) {
-        z.push_back(StandardGaussianMatrix::gen(cols));
+    if (cols % 2 == 0) {
+        for (std::size_t i = 0; i < rows; i++) {
+            z.push_back(StandardGaussianMatrix::gen(cols));
+        }
+    } else {
+        for (std::size_t i = 0; i < rows; i += 2) {
+            std::vector<double> two_rows(StandardGaussianMatrix::gen(cols << 1));
+            z.push_back(std::vector<double>(two_rows.cbegin(), two_rows.cbegin() + cols));
+            z.push_back(std::vector<double>(two_rows.cbegin() + cols, two_rows.cend()));
+        }
     }
+    
     return z;
 }

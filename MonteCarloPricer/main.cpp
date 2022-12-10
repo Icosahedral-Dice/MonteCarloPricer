@@ -8,6 +8,8 @@
 #include <iostream>
 #include "EuropeanOptionAnalyzer.hpp"
 #include "RNG.hpp"
+#include "PathDependentOption.hpp"
+#include "BarrierOptionAnalyzer.hpp"
 #include <iomanip>
 
 void TestAnalyzer() {
@@ -46,20 +48,33 @@ void TestDividend() {
     auto payoff = std::bind(option.PutPayoff(), std::placeholders::_1, 7. / 12.);
     
     EuropeanOptionAnalyzer analyzer(option);
-    for (std::size_t n = 20000; n <= 2560000; n <<= 1) {
+    for (std::size_t n = 1; n <= 256; n <<= 1) {
         LCE_uniform::reseed(1);
-        auto res = analyzer.PriceVanilla(n, payoff, proportional, fixed);
+        auto res = analyzer.Price(n * 10000, payoff, proportional, fixed);
         std::cout << res[0] << '\t' << res[1] << '\t' << res[2] << '\t' << res[3] << std::endl;
     }
 }
 
+void TestBarrier() {
+    EuropeanOption option(0., 42., 40., 7. / 12., .25, .03, .015);
+    double B = 35.;
+    
+    BarrierOption barrier_option(option, B, Call, DownAndOut);
+    
+    BarrierOptionAnalyzer analyzer(barrier_option);
+    
+    std::cout << "MC: " << analyzer.Price(200, 1280000) << std::endl;
+    std::cout << "BS: " << barrier_option.BSPrice() << std::endl;
+}
+
 int main(int argc, const char * argv[]) {
     
-    std::cout << std::fixed << std::setprecision(8);
+    std::cout << std::fixed << std::setprecision(6);
 //    TestAnalyzer();
 //    PriceAndGreek();
 //    VarRed();
-    TestDividend();
+//    TestDividend();
+    TestBarrier();
     
     return 0;
 }
