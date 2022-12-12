@@ -51,7 +51,7 @@ void TestDividend() {
     for (std::size_t n = 1; n <= 256; n <<= 1) {
         LCE_uniform::reseed(1);
         auto res = analyzer.Price(n * 10000, payoff, proportional, fixed);
-        std::cout << res[0] << '\t' << res[1] << '\t' << res[2] << '\t' << res[3] << std::endl;
+        std::cout << res[0] << '\t' << res[1] << '\t' << res[2] << '\t' << res[3] << '\t' << res[4] << std::endl;
     }
 }
 
@@ -63,18 +63,30 @@ void TestBarrier() {
     
     BarrierOptionAnalyzer analyzer(barrier_option);
     
-    std::cout << "MC: " << analyzer.Price(200, 1280000) << std::endl;
-    std::cout << "BS: " << barrier_option.BSPrice() << std::endl;
+    double BS_price = barrier_option.BSPrice();
+    
+    for (std::size_t n = 50; n < 51200; n <<= 1) {
+        double MC_price = analyzer.Price(200, n, 1);
+        std::cout << MC_price << '\t' << std::abs(MC_price - BS_price) << std::endl;
+    }
+    
+    for (std::size_t N = 10000; N <= 5120000; N <<= 1) {
+        std::size_t m = std::ceil(std::pow(N, 1. / 3.) * std::pow(7. / 12., 2. / 3.));
+        std::size_t n = std::floor(1. * N / m);
+        double MC_price = analyzer.Price(m, n, 1);
+        std::cout << MC_price << '\t' << std::abs(MC_price - BS_price) << std::endl;
+    }
+    
 }
 
 int main(int argc, const char * argv[]) {
     
-    std::cout << std::fixed << std::setprecision(6);
+    std::cout << std::fixed << std::setprecision(8);
 //    TestAnalyzer();
 //    PriceAndGreek();
 //    VarRed();
-//    TestDividend();
-    TestBarrier();
+    TestDividend();
+//    TestBarrier();
     
     return 0;
 }

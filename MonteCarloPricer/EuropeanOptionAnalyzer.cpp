@@ -183,6 +183,12 @@ std::vector<double> EuropeanOptionAnalyzer::Price(std::size_t N, const std::func
     double W_delta_hat = delta_hat - b_delta_hat * (this->DiscountAndAverage(delta_nodiv) - option_.DeltaPut());
     
     res.push_back(W_delta_hat);
+//    std::vector<double> W(delta.size());
+//    double option_delta = option_.DeltaPut();
+//    std::transform(delta.cbegin(), delta.cend(), delta_nodiv.cbegin(), W.begin(), [&](double delta_div, double delta_no_div)->double {
+//        return delta_div * std::exp(-option_.r_ * option_.T_) - b_delta_hat * (delta_no_div * std::exp(-option_.r_ * option_.T_) - option_delta);
+//    });
+//    res.push_back(std::accumulate(W.cbegin(), W.cend(), 0.) / delta.size());
     
     return res;
 }
