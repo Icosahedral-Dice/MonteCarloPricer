@@ -114,6 +114,13 @@ double BarrierOption::BSPrice() const {
         case Put:
             return 0.;
     }
-    
-    
+}
+
+AsianOption::AsianOption(const EuropeanOption& option, const EuropeanOptionType& option_type) : option_(option), option_type_(option_type) {}
+
+double AsianOption::operator () (const std::vector<double>& path) const {
+    // !!!: ASIAN CALL
+    double sum_S = std::accumulate(path.cbegin(), path.cend(), 0.) + option_.S_;
+    double avg_S = sum_S / (path.size() + 1.);
+    return std::max(0., avg_S - option_.K_);
 }

@@ -47,4 +47,15 @@ public:
     double BSPrice() const;
 };
 
+class AsianOption : public PathDependentOption {
+private:
+    EuropeanOption option_; // Corresponding European option
+    EuropeanOptionType option_type_;
+    
+public:
+    AsianOption(const EuropeanOption& option, const EuropeanOptionType& option_type);
+    
+    virtual double operator () (const std::vector<double>& path) const override;
+};
+
 #endif /* PathDependentOption_hpp */
